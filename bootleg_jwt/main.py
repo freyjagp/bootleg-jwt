@@ -14,7 +14,7 @@ class Token(BaseModel):
 
 class Header(BaseModel):
     alg: str = "blake2b"
-    typ: str = "FWT"
+    typ: str = "BootlegJWT"
 
 
 class Data(BaseModel):
@@ -32,8 +32,8 @@ class HumanReadable(BaseModel):
 
 
 class TokenData(BaseModel):
-    id: Token.id
-    username: Token.name
+    id: int
+    username: str
     duration: int
 
 
@@ -84,7 +84,7 @@ class BootlegJWT():
         return c + b'.' + d
 
 
-    def validate_token(self, token: bytes, secret) -> HumanReadable | False:
+    def validate_token(self, token: bytes, secret) -> bool:
         data: Data = get_data(token)
         if c != data.hash: return False
         b = data.header + b'.' + data.token
@@ -94,7 +94,7 @@ class BootlegJWT():
         return True if data.received < d['exp'] else False
 
 
-    def build_token(id: int, username: str, duration: int) -> Token:
+    def build_token(self, id: int, username: str, duration: int) -> Token:
         t = int(get_time())
         return Token(
             id=id,
@@ -108,8 +108,8 @@ class BootlegJWT():
         return Header()
 
 
-    def __init__(self, token_data: TokenData = False, token: Token = False):
-        secret = config('SECRET')
+    def __init__(self, token_data: TokenData = False, token: bytes = False):
+        secret = config('SECRET').encode()
         self.HEADER = self.build_header()
         if token_data: built = self.build_token(id=token_data.id,username=token_data.username,duration=token_data.duration)
         self.ENCODED_TOKEN = self.encode_token(built, secret)
