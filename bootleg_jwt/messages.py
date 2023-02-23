@@ -1,0 +1,1 @@
+ERROR_TYPE_INVALID = "Error! Data must be of type 'bytes'!"
