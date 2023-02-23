@@ -20,9 +20,9 @@ class BootlegJWT():
         duration: int = 30,
     ):
         secret = config('SECRET').encode()
-        if not token and not user_data: raise Exception("Invalid use of this module.")
         if user_data: self.generate(user_data, body_data, duration, secret)
-        if token: self.validate(token, secret)
+        if token: self.validate(token=token, secret=secret)
+        if not token and not user_data: raise Exception("Invalid use of this module.")
 
 
     def generate(self, user_data: UserData, body_data: Any, duration: int, secret=b''):
@@ -49,10 +49,14 @@ class BootlegJWT():
 
 
     def validate(self, token: Token, secret=b''):
+        is_valid = False
         expired = True if get_time() > token.Header.expires.value else False
         if expired: return False
-        payload = derive_payload(token.Header,token.Body)
+        payload = derive_payload(header=token.Header,body=token.Body)
         signature: Hash = sign_payload(payload=payload,secret=secret)
-        return True if token.Signature.value == signature.value else False
+        token_signature = token.Signature.value
+        payload_signature = signature.value
+        if token_signature.decode() == payload_signature.decode(): is_valid = True
+        if is_valid: self.TOKEN_IS_VALID = True
 
 
