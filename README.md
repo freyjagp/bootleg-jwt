@@ -1,5 +1,11 @@
 # bootleg-jwt
 
+`bootleg-jwt` aims to mimic JSON Web Tokens.
+
+You can use this module to generate tokens, and validate them.
+
+<!-- # bootleg-jwt
+
 `bootleg-jwt` is a python module that implements the bare minimum of the JWT concept, with zero regard for its actual specification. It utilizes the blake2 hashing algorithm, a secret stored in a .env file, and very simple logic to encode/decode a small set of data into a bytestring that can then be used for stateless client validation.
 
 this is more of a proof of concept, then valid production code. Integrate at your own risk. This is for learning purposes, mainly.
@@ -40,4 +46,4 @@ This is just a proof of concept. I offer no warranty. Use at your own volition, 
 
 This kinda just helped me learn how JWTs work (and despite my warning, is being used in a private project which I may someday expose to the public). If you have any suggestions for improvement, I'm happy to hear them.
 
-- Freyja
+- Freyja -->

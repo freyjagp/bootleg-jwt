@@ -1,117 +1,58 @@
-import base64
-from time import time
-from hashlib import blake2b
-from pydantic import BaseModel
-from json import dumps, loads
+from .schema import Timestamp, UserData, Token, TokenBody, TokenHeader, Hash
+from .funcs import derive_payload, sign_payload, get_time, encode_data
+from typing import Any
 from decouple import config
-
-class Token(BaseModel):
-    id: int
-    name: str
-    init: int
-    exp: int
-
-
-class Header(BaseModel):
-    alg: str = "blake2b"
-    typ: str = "BootlegJWT"
-
-
-class Data(BaseModel):
-    header: bytes
-    token: bytes
-    hash: bytes
-    received: int
-
-
-class HumanReadable(BaseModel):
-    header: Header
-    token: Token
-    hash: bytes
-    received: int
-
-
-class TokenData(BaseModel):
-    id: int
-    username: str
-    duration: int
-
-
-def get_time():
-    return int(time())
-
-
-def get_data(encoded_token: bytes):
-    z = encoded_token.split(b'.')
-    a = z[0]
-    b = z[1]
-    c = z[2]
-    t = get_time()
-    return Data(header=a,token=b,hash=c,received=t)
-
-
-def human_readable(data: Data) -> HumanReadable:
-    header = data.header
-    token = data.token
-    hash = data.hash
-    received = data.received
-    header = loads(loads(base64.b64decode(header)))
-    token = loads(loads(base64.b64decode(token)))
-    header = Header(
-        alg=header['alg'],
-        typ=header['typ']
-    )
-    token = Token(
-        id=token['id'],
-        name=token['name'],
-        init=token['init'],
-        exp=token['exp']
-    )
-    return HumanReadable(header=header,token=token,hash=hash,received=received)
 
 
 class BootlegJWT():
+    TOKEN: Token = False
+    TOKEN_ENCODED: bytes = False
+    TOKEN_JSON: Token.json = False
+    TOKEN_IS_VALID: bool = False
+    TOKEN_GENERATED: bool = False
 
 
-    TOKEN_IS_VALID = False
-
-
-    def encode_token(self, token: Token, secret) -> bytes:
-        a = base64.b64encode(dumps(self.HEADER.json(),ensure_ascii=True,indent=4).encode())
-        b = base64.b64encode(dumps(token.json(),ensure_ascii=True,indent=4).encode())
-        c = a + b'.' + b
-        d = blake2b(c,key=secret).hexdigest().encode()
-        return c + b'.' + d
-
-
-    def validate_token(self, token: bytes, secret) -> bool:
-        data: Data = get_data(token)
-        if c != data.hash: return False
-        b = data.header + b'.' + data.token
-        c = blake2b(b,key=secret).hexdigest().encode()
-        d = loads(loads(base64.b64decode(data.token)))
-        if d['exp'] < d['init']: return False
-        return True if data.received < d['exp'] else False
-
-
-    def build_token(self, id: int, username: str, duration: int) -> Token:
-        t = int(get_time())
-        return Token(
-            id=id,
-            name=username,
-            init=t,
-            exp=int(t + duration)
-        )
-
-
-    def build_header(self) -> Header:
-        return Header()
-
-
-    def __init__(self, token_data: TokenData = False, token: bytes = False):
+    def __init__(
+        self,
+        token: Token = False,
+        user_data: UserData = False,
+        body_data: Any = False,
+        duration: int = 30,
+    ):
         secret = config('SECRET').encode()
-        self.HEADER = self.build_header()
-        if token_data: built = self.build_token(id=token_data.id,username=token_data.username,duration=token_data.duration)
-        self.ENCODED_TOKEN = self.encode_token(built, secret)
-        if token: self.TOKEN_IS_VALID = self.validate_token(token, secret)
-        if self.TOKEN_IS_VALID: self.TOKEN = human_readable(get_data(token))
+        if not token and not user_data: raise Exception("Invalid use of this module.")
+        if user_data: self.generate(user_data, body_data, duration, secret)
+        if token: self.validate(token, secret)
+
+
+    def generate(self, user_data: UserData, body_data: Any, duration: int, secret=b''):
+        time = get_time()
+        created = Timestamp(value=time)
+        expires = Timestamp(value=time+duration)
+        header = TokenHeader(
+            created=created,
+            expires=expires,
+            type="Default")
+        body = TokenBody(
+            user=user_data,
+            value=body_data)
+        payload = derive_payload(header,body)
+        signature: Hash = sign_payload(payload,secret)
+        self.TOKEN = Token(
+            Header=header,
+            Body=body,
+            Signature=signature)
+        self.TOKEN_ENCODED = encode_data(self.TOKEN.json().encode())
+        self.TOKEN_JSON = self.TOKEN.json(indent=4)
+        self.TOKEN_GENERATED = True
+        self.TOKEN_IS_VALID = self.validate(self.TOKEN,secret)
+
+
+    def validate(self, token: Token, secret=b''):
+        expired = True if get_time() > token.Header.expires.value else False
+        if expired: return False
+        payload = derive_payload(token.Header,token.Body)
+        signature: Hash = sign_payload(payload=payload,secret=secret)
+        return True if token.Signature.value == signature.value else False
+
+
