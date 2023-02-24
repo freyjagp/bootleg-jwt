@@ -6,9 +6,6 @@ This module provides two main functions (soon, three):
 
 - [Generate a token](#generate-a-token)
 - [Validate a token](#validate-a-token)
-- [Decode a token](#decode-a-token)
-
-It has been designed to be easily read, modable, and usable.
 
 ___
 
@@ -106,7 +103,7 @@ print(json)
 
 </details>
 <br>
-This is the json representation of our `Token` model. This is a pydantic model containing three pydantic models defined in [[schema.py]]
+This is the json representation of our `Token` model. This is a pydantic model containing three pydantic models defined in `src/bootleg_jwt/schema.py`
 
 - Note: Our `UserData` schema lives in here too, and may be easily adapted to change its parameters as one sees fit. This code does not necessairily provide _functionality_ as much as it is _easily modified_.
 
