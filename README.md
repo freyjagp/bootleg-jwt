@@ -1,49 +1,159 @@
 # bootleg-jwt
 
-`bootleg-jwt` aims to mimic JSON Web Tokens.
+`bootleg-jwt` aims to mimic JSON Web Tokens, pydantically.
 
 You can use this module to generate tokens, and validate them.
 
-<!-- # bootleg-jwt
+I have designed it to be fairly simple to use, and easy to read if you want to dig into the guts of the module's source. But instead of talking, I'll show you what's going on:
+___
 
-`bootleg-jwt` is a python module that implements the bare minimum of the JWT concept, with zero regard for its actual specification. It utilizes the blake2 hashing algorithm, a secret stored in a .env file, and very simple logic to encode/decode a small set of data into a bytestring that can then be used for stateless client validation.
+## Usage
 
-this is more of a proof of concept, then valid production code. Integrate at your own risk. This is for learning purposes, mainly.
+There are two main uses, see below:
 
-the idea is simple: If we can utilize a keyed hashing algorithm, and a set of data, we may securely authenticate that data so long as they key remains secret.
+### Generate a token
 
-Abstractly, this means we may take, say, a generic header, a generic token, combine those, hash them, append the hash, and send it. The data contained within the token and header may not be altered in any way, or they will produce a dramatically different hash. Furthermore, the hash cannot be spoofed, unless an attacker knows the key which was used to hash the data in the first place. Therefore, the data is always secure, so long as nobody decides to mess with it. If someone *does* mess with it, then it will simply not validate.
+```python
+from bootleg_jwt import BootlegJWT, UserData, Token
+from os import environ
 
-This project does that.
 
-We utilize the `blake2` hashing algorithm, which has the option to hash with or without a key. We establish a secret, stored in a `.env` file (see repository). Then we build our very simple program, and expose its functionality through `__init__.py`. From there, one may import (`from bootleg_jwt import TokenData, BootlegJWT`) the necessary classes to use it.
+DURATION = 60*60                    # Token expires after this many seconds
 
-## Create a token
 
-To create a token, use the imported `TokenData` class. It is a pydantic model. You may create a token in one line: `token = BootlegJWT(data=TokenData(id=1,username="baldur",duration=60*60))`
+SECRET = "some-secret-key"
 
-__NOTE:__ duration is always in seconds.
 
-This produces a bytestring. This bytestring is actually three things:
+environ['SECRET'] = SECRET          # This module depends upon an environment
+                                    # variable `SECRET`. You may also set this
+                                    # secret in a `.env` file in your project's root,
+                                    # or by using `export SECRET="secret"`
 
-1. a `base64` encoded json header
-2. a `base64` encoded json token
-3. a `blake2` hash generated using the header, the token, and our `SECRET`
 
-This verifies the integrity of the data, and prevents tampering. The token contains a duration, which must not have elapsed for the token to remain valid. Any tampering will drastically alter the hash. And a valid hash cannot be generated without the secret. Therefore, this provides a secure stateless authentication token.
+user_data = UserData(
+    id = 1,
+    uuid = b'some-uuid',
+    name = 'Username')
 
-## Validate a token
 
-Simply use `BootlegJWT(token=b'not.a.realtoken').TOKEN_IS_VALID`. This will take in a token, check if its valid, and return a bool. If the token is valid, the instance also produces `TOKEN`, which is an easy to parse pydantic model defined in class `HumanReadable`.
+generated = BootlegJWT(user_data=user_data, body_data=["some","arbitrary",["dataset"]])
+token: Token = generated.TOKEN
+encoded = generated.TOKEN_ENCODED
+json = generated.TOKEN_JSON
+validate: bool = generated.TOKEN_IS_VALID # should be true
+was_generated: bool = generated.TOKEN_GENERATED # should be true
 
-## Requirements
 
-`pip install pydantic python-decouple`
+print(json)
+```
 
-## Conclusion
+<details>
+<summary>Output (click to expand):</summary>
+<br>
 
-This is just a proof of concept. I offer no warranty. Use at your own volition, and do not integrate this directly into production code. Feel free to fork it, open issues, prs, etc. I might check in and respond. Who knows.
+```json
+{
+    "Header": {
+        "created": {
+            "unit": [
+                "Seconds since epoch",
+                "s+epoch"
+            ],
+            "value": 1677224053
+        },
+        "expires": {
+            "unit": [
+                "Seconds since epoch",
+                "s+epoch"
+            ],
+            "value": 1677224083
+        },
+        "type": "Default"
+    },
+    "Body": {
+        "user": {
+            "id": 1,
+            "uuid": "some-uuid",
+            "name": "Username"
+        },
+        "value": [
+            "some",
+            "arbitrary",
+            [
+                "dataset"
+            ]
+        ]
+    },
+    "Signature": {
+        "value": "922201ceedf626eada3a4f4f44e36b190d2d5297aec43eb5bd58aafbce36db700a619ca50c584b5f585d87da634dfd473224826230e779b40d1ecb69d7f19ad7",
+        "algorithm": "blake2b",
+        "keyed": true,
+        "salted": false,
+        "person": false
+    }
+}
+```
 
-This kinda just helped me learn how JWTs work (and despite my warning, is being used in a private project which I may someday expose to the public). If you have any suggestions for improvement, I'm happy to hear them.
+</details>
 
-- Freyja -->
+This is the json representation of our `Token` model. This is a pydantic model containing three pydantic models defined in `src/bootleg_jwt/schema.py`.
+
+You may also call instance variable `TOKEN_ENCODED` to get a base64 encoded bytestring - perfect for storing as a cookie for later use.
+
+```txt
+eyJIZWFkZXIiOiB7ImNyZWF0ZWQiOiB7InVuaXQiOiBbIlNlY29uZHMgc2luY2UgZXBvY2giLCAicytlcG9jaCJdLCAidmFsdWUiOiAxNjc3MjI0NzgzfSwgImV4cGlyZXMiOiB7InVuaXQiOiBbIlNlY29uZHMgc2luY2UgZXBvY2giLCAicytlcG9jaCJdLCAidmFsdWUiOiAxNjc3MjI0ODEzfSwgInR5cGUiOiAiRGVmYXVsdCJ9LCAiQm9keSI6IHsidXNlciI6IHsiaWQiOiAxLCAidXVpZCI6ICJzb21lLXV1aWQiLCAibmFtZSI6ICJVc2VybmFtZSJ9LCAidmFsdWUiOiBbInNvbWUiLCAiYXJiaXRyYXJ5IiwgWyJkYXRhc2V0Il1dfSwgIlNpZ25hdHVyZSI6IHsidmFsdWUiOiAiM2I3ZjQ0MTA4ZjU1OWJjYmMyMWQ5NzQ3YTY2NGEyZjFjN2FiYmMxN2YyN2U4NDIyYjgwODIxNTNlYTE4M2MzNGE4NzhmM2Q3NjRlYTExZjE5NDFmN2M3MDUxNTM4MDgyYTdiYTRlYTBjYjFhYmI1OTVhNmU5ZGFiMTc4YmY5MjEiLCAiYWxnb3JpdGhtIjogImJsYWtlMmIiLCAia2V5ZWQiOiB0cnVlLCAic2FsdGVkIjogZmFsc2UsICJwZXJzb24iOiAiRmFsc2UifX0=
+```
+
+### Validate a token
+
+See expansion of above:
+
+```python
+from bootleg_jwt import BootlegJWT, UserData, Token
+from os import environ
+from time import sleep
+
+
+DURATION = 3                   # duration in seconds (one hour)
+
+
+SECRET = "some-secret-key"
+
+
+environ['SECRET'] = SECRET          # This module depends upon an environment
+                                    # variable `SECRET`. You may also set this
+                                    # secret in a `.env` file in your project's root,
+                                    # or by using `export SECRET="secret"`
+
+
+user_data = UserData(
+    id = 1,
+    uuid = b'some-uuid',
+    name = 'Username')
+
+
+generated = BootlegJWT(
+    duration=DURATION,
+    user_data=user_data,
+    body_data=["some","arbitrary",["dataset"]])
+
+
+token: Token = generated.TOKEN
+
+
+# sleep(4)                      # See expiration in action.
+                                # If 4 seconds pass on
+                                # this 3 second token, it becomes invalid!
+validate = BootlegJWT(token=token).TOKEN_IS_VALID
+
+
+print(validate)
+```
+
+outputs: `True`
+
+We can test expiration as well by uncommenting `sleep(4)` and watching the output change to `False`
+
+### Decode a token
+
+So we can get the token encoded as base64 but that still requires work from the user to actually decode that shit into a `Token` model before passing it. That's my bad. I overlooked this functionality and have discovered that it is necessary while writing the readme. Version 0.2.0 will address this issue.
