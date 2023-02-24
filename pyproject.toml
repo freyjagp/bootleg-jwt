@@ -1,0 +1,3 @@
+[build-system]
+requires = ["setuptools", "python-decouple"]
+build-backend = "setuptools.build_meta"

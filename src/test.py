@@ -1,5 +1,6 @@
 from bootleg_jwt import BootlegJWT, UserData, Timestamp, Token, TokenHeader, TokenBody
 from bootleg_jwt.funcs import derive_payload, sign_payload, encode_data, get_time
+from time import sleep
 
 
 # SECRET = b"secretsquirrel"
@@ -87,6 +88,6 @@ def development_test(duration = 60):
     return True
 
 
-if __name__ == "__main__":
-    development_test()
-    development_test_2()
+# if __name__ == "__main__":
+#     development_test()
+#     development_test_2()
