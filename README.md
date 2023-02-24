@@ -1,13 +1,18 @@
-# bootleg-jwt
+# bootleg-jwt <!-- omit in toc -->
 
-`bootleg-jwt` aims to mimic JSON Web Tokens, pydantically.
+`bootleg-jwt` aims to mimic JSON Web Tokens in a simple, `pydantic` way.
 
-You can use this module to generate tokens, and validate them.
+This module provides two main functions (soon, three):
 
-I have designed it to be fairly simple to use, and easy to read if you want to dig into the guts of the module's source. But instead of talking, I'll show you what's going on:
+- [Generate a token](#generate-a-token)
+- [Validate a token](#validate-a-token)
+- [Decode a token](#decode-a-token)
+
+It has been designed to be easily read, modable, and usable.
+
 ___
 
-## Usage
+## Usage <!-- omit in toc -->
 
 There are two main uses, see below:
 
@@ -36,7 +41,12 @@ user_data = UserData(
     name = 'Username')
 
 
-generated = BootlegJWT(user_data=user_data, body_data=["some","arbitrary",["dataset"]])
+generated = BootlegJWT(
+    duration=DURATION,
+    user_data=user_data,
+    body_data=["some","arbitrary",["dataset"]])
+
+
 token: Token = generated.TOKEN
 encoded = generated.TOKEN_ENCODED
 json = generated.TOKEN_JSON
@@ -95,8 +105,10 @@ print(json)
 ```
 
 </details>
+<br>
+This is the json representation of our `Token` model. This is a pydantic model containing three pydantic models defined in [schema.py](src/bootleg_jwt/schema.py)
 
-This is the json representation of our `Token` model. This is a pydantic model containing three pydantic models defined in `src/bootleg_jwt/schema.py`.
+- Note: Our `UserData` schema lives in here too, and may be easily adapted to change its parameters as one sees fit. This code does not necessairily provide _functionality_ as much as it is _easily modified_.
 
 You may also call instance variable `TOKEN_ENCODED` to get a base64 encoded bytestring - perfect for storing as a cookie for later use.
 
@@ -150,10 +162,16 @@ validate = BootlegJWT(token=token).TOKEN_IS_VALID
 print(validate)
 ```
 
-outputs: `True`
+__Output:__ `True`
 
 We can test expiration as well by uncommenting `sleep(4)` and watching the output change to `False`
 
-### Decode a token
+### Decode a token <!-- omit in toc -->
 
-So we can get the token encoded as base64 but that still requires work from the user to actually decode that shit into a `Token` model before passing it. That's my bad. I overlooked this functionality and have discovered that it is necessary while writing the readme. Version 0.2.0 will address this issue.
+So we can get the token encoded as base64 but that still requires work from the developer to actually decode that shit into a `Token` model before passing it. That's my bad. I overlooked this functionality and have discovered that it is necessary while writing the readme. Version 0.2.0 will address this issue.
+
+## To-do
+
+An ostensible list of things I may or may not add (idk, this is for a personal project, so don't count on it)
+
+- Pass custom user_data schema
