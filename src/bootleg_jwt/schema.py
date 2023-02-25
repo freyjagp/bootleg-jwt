@@ -1,40 +1,49 @@
 from pydantic import BaseModel
-from typing import Any, List
+from typing import Any
+
+
+class Unit(BaseModel):
+    type: str = "time"
+    name: str = "seconds"
+    shorthand: str = "s"
 
 
 class Timestamp(BaseModel):
-    unit: List[str] = ["Seconds since epoch", "s+epoch"]
+    unit: Unit = Unit(name="seconds since epoch",shorthand="s+epoch")
     value: int
 
 
-class UserData(BaseModel):
-    id: int = 0
-    uuid: bytes = b'00000000'
-    name: str = "DEFAULT"
+class Duration(BaseModel):
+    unit: Unit = Unit()
+    value: int = 60
 
-
-class Hash(BaseModel):
-    value: bytes
-    algorithm: str = "blake2b"
-    keyed: bool = False
-    salted: str = False
-    person: str = False
-
-
-class TokenHeader(BaseModel):
+class Header(BaseModel):
+    type: str = "Default Token Type"
+    duration: Duration
     created: Timestamp
     expires: Timestamp
-    type: str = "bootlegjwt"
 
 
-class TokenBody(BaseModel):
-    user: UserData
-    value: Any
+class Body(BaseModel):
+    user: Any = "USER"
+    data: Any = "BODY"
+
+
+class Payload(BaseModel):
+    header: Header
+    body: Body
+
+class Hash(BaseModel):
+    value: bytes = b''
+    algorithm: str = "blake2b"
+    keyed: bool = False
+    salt: bytes = b''
+    person: bytes = b''
 
 
 class Token(BaseModel):
-    Header: TokenHeader
-    Body: TokenBody
-    Signature: Hash
+    header: Header
+    body: Body
+    signature: Hash
 
 
