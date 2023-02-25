@@ -24,10 +24,18 @@ print(token.JSON, token.VALID)
 print(token2.TOKEN, token2.VALID)
 
 
+validate1 = BootlegJWT(token.ENCODED)
+validate2 = BootlegJWT(token2.ENCODED)
+print(validate1.VALID, validate2.VALID)
+
+
 sleep(3)
 
 
-validate = BootlegJWT(token2.ENCODED)
+validate1 = BootlegJWT(token.ENCODED)
+validate2 = BootlegJWT(token2.ENCODED)
+print(validate1.VALID, validate2.VALID)
 
 
-print(validate.VALID, validate.DECODED)
+
+
