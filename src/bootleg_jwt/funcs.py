@@ -61,7 +61,7 @@ def encode_payload(payload: Payload):
 
 def sign_payload(payload: Payload, _secret: bytes, _salt=b'', _person=b''):
     signature = blake2bhash(data=encode_payload(payload),secret_key=_secret,person=_person,salt=_salt)
-    signature = Hash(value=signature)
+    signature = Hash(value=signature,keyed=True)
     return signature
 
 
