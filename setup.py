@@ -39,7 +39,7 @@ setup(
     keywords="cryptography, tokens, hashing",
     package_dir={"bootleg_jwt": "src/bootleg_jwt"},
     python_requires=">=3.10, <4",
-    install_requires=["pydantic", "python-decouple"],
+    install_requires=["pydantic", "python-decouple", "cryptography"],
     project_urls={
         "Bug Reports": "https://github.com/freyjagp/bootleg-jwt/issues",
         # "Funding": "https://donate.pypi.org",
