@@ -33,6 +33,7 @@ class BootlegJWT():
         signature = sign_payload(payload, _secret)
         _token: Token = Token(header=payload.header,body=payload.body,signature=signature)
         self.TOKEN = _token
+        self.DECODED = _token
         self.JSON = _token.json(indent=4)
         self.ENCODED = encode_token(_token)
         valid = self.validate(_token,_secret)
@@ -50,5 +51,6 @@ class BootlegJWT():
 
         if is_valid:
             self.VALID = True
+            self.TOKEN = token
             self.DECODED = token
             self.JSON = token.json(indent=4)
