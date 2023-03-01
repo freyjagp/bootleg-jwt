@@ -40,8 +40,9 @@ def decode_token(token: bytes):
         if not isinstance(token, bytes): raise TypeError(ERROR_INVALID_TYPE)
         token = b64decode(token)
         parsed = Token.parse_raw(token)
-    except ValidationError or TypeError or Error:
-        return False
+    except Error: return False
+    except ValidationError: return False
+    except TypeError: return False
     else: return parsed
 
 

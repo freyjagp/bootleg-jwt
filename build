@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="0.2.2"
+VERSION="0.2.3"
 export VERSION=$VERSION
 python3 -m build
 
