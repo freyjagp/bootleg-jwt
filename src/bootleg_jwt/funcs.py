@@ -4,6 +4,7 @@ from pydantic import ValidationError
 from time import time
 from base64 import b64encode, b64decode
 from hashlib import blake2b
+from binascii import Error
 
 
 def header(duration,type = "Default"):
@@ -39,7 +40,7 @@ def decode_token(token: bytes):
         if not isinstance(token, bytes): raise TypeError(ERROR_INVALID_TYPE)
         token = b64decode(token)
         parsed = Token.parse_raw(token)
-    except ValidationError or TypeError:
+    except ValidationError or TypeError or Error:
         return False
     else: return parsed
 
